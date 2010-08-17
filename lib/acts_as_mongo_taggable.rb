@@ -122,57 +122,105 @@ module ActsAsMongoTaggable
     end
   end
   
-  # returns my current tag word list; raises exception if user tries to multi-tag with same word
-  def tag!(word_or_words, user)
+  # returns my current tag word list; with optional user, raises exception if user tries to 
+  # multi-tag with same word when user specified or if duplicate tag
+  def tag!(word_or_words, options={})
+    user = options[:user]
     arr_of_words(word_or_words).each do |word|
-      raise StandardError if tag_words_by_user(user).include?(word)
+      word = word.downcase unless options[:case_sensitive] == true
+      raise StandardError if (user && tag_words_by_user(user).include?(word)) || (model_tag = model_tags.detect{|tag| tag.word == word})
       
-      #First add Tag/Tagging
-      t = Tag.first(:word => word) || Tag.create!(:word => word)
-      t.taggings << Tagging.new(:user => user, :taggable => self)
-      t.save!
-      
+      if user || !model_tag
+        #First add Tag/Tagging
+        t = Tag.first(:word => word) || Tag.create!(:word => word)
+        t.taggings << Tagging.new(:user => user, :taggable => self)
+        t.save
+      end
+    
       #Now add ModelTag/User/tag_word
-      model_tag = model_tags.detect{|tag| tag.word == word}
       unless model_tag
         model_tag = ModelTag.new(:word => word, :tag => t)
         self.model_tags << model_tag
         self.tag_words << word
       end
-      model_tag.users << user
+      model_tag.users << user if user
     end
     save!
     tags
   end
   
-  # tags, but silently ignores if user tries to multi-tag with same word
+  # tags, with optional user, but silently ignores if user tries to multi-tag with same word
   # NOTE: automatically downcases each word unless you manually specify :case_sensitive=>true
-  def tag(word_or_words, user, opts={})
+  def tag(word_or_words, options={})
+    user = options[:user]
     arr_of_words(word_or_words).each do |word|
-      word = word.downcase unless opts[:case_sensitive] == true
-      unless tag_words_by_user(user).include?(word)
-        #First add Tag/Tagging
-        t = Tag.first(:word => word) || Tag.create!(:word => word)
-        t.taggings << Tagging.new(:user => user, :taggable => self)
-        t.save
+      word = word.downcase unless options[:case_sensitive] == true
+      if user.nil? || (user && !tag_words_by_user(user).include?(word))
+        model_tag = model_tags.detect{|tag| tag.word == word}
+        
+        if user || !model_tag
+          #First add Tag/Tagging
+          t = Tag.first(:word => word) || Tag.create!(:word => word)
+          t.taggings << Tagging.new(:user => user, :taggable => self)
+          t.save
+        end
       
         #Now add ModelTag/User/tag_word
-        model_tag = model_tags.detect{|tag| tag.word == word}
         unless model_tag
           model_tag = ModelTag.new(:word => word, :tag => t)
           self.model_tags << model_tag
           self.tag_words << word
         end
-        model_tag.users << user
+        model_tag.users << user if user
       end
     end
     save
     tags
   end
   
+  # tags anonymously, not associated with user. Doesn't allow duplicate tags.
+  # NOTE: automatically downcases each word unless you manually specify :case_sensitive=>true
+  # def tag(word_or_words, opts={})
+  #     arr_of_words(word_or_words).each do |word|
+  #       word = word.downcase unless opts[:case_sensitive] == true
+  #       unless model_tags.any?{|tag| tag.word == word}
+  #         #First add Tag/Tagging
+  #         t = Tag.first(:word => word) || Tag.create!(:word => word)
+  #         t.taggings << Tagging.new(:taggable => self)
+  #         t.save
+  # 
+  #         model_tag = ModelTag.new(:word => word, :tag => t)
+  #         self.model_tags << model_tag
+  #         self.tag_words << word
+  #       end
+  #     end
+  #     save
+  #     tags
+  #   end
+  
+  
   # returns the Rating object found if user has rated this project, else returns nil
   def tagged_by_user?(user)
     !(model_tags.detect{|tag| tag.user_ids.include?(user.id)}.nil?)
+  end
+  
+  # removes tag and all taggings from object 
+  # NOTE: automatically downcases each word unless you manually specify :case_sensitive=>true
+  def untag(word_or_words, opts={})
+    arr_of_words(word_or_words).each do |word|
+      word = word.downcase unless opts[:case_sensitive] == true
+      model_tag = model_tags.detect{|tag| tag.word == word}
+      if model_tag
+        tag = model_tag.tag
+        taggings = tag.taggings.select{|tagging| tagging.taggable_type == self.class.name && tagging.taggable_id == self.id}
+        taggings.each{|tagging| tag.taggings.delete tagging}
+        tag.save_or_destroy
+        tag_words.delete model_tag.word
+        model_tags.delete model_tag
+      end
+    end
+    save
+    tags
   end
   
   def self.included(receiver)

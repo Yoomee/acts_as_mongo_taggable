@@ -19,7 +19,7 @@ class ModelTag
   
 private
   def set_tagging_count
-    self.tagging_count = user_ids.count
+    self.tagging_count = user_ids.size
   end
   
   class UserProxy
