@@ -23,11 +23,11 @@ Rake::RDocTask.new(:rdoc) do |rdoc|
 end
 
 begin
-  GEM = "acts_as_mongo_taggable"
-  AUTHOR = "Matt E. Patterson"
-  EMAIL = "mpatterson@ngenera.com"
+  GEM = "yoomee-acts_as_mongo_taggable"
+  AUTHOR = "Matt Atkins, Matt E. Patterson"
+  EMAIL = "matt@yoomee.com, mpatterson@ngenera.com"
   SUMMARY = "A ruby gem for acts_as_taggable to mongo"
-  HOMEPAGE = "http://github.com/mepatterson/acts_as_mongo_taggable"
+  HOMEPAGE = "http://github.com/Yoomee/acts_as_mongo_taggable"
   
   gem 'jeweler', '>= 1.0.0'
   require 'jeweler'

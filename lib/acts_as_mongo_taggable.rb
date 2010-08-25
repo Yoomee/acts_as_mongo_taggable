@@ -178,25 +178,18 @@ module ActsAsMongoTaggable
     tags
   end
   
-  # tags anonymously, not associated with user. Doesn't allow duplicate tags.
-  # NOTE: automatically downcases each word unless you manually specify :case_sensitive=>true
-  # def tag(word_or_words, opts={})
-  #     arr_of_words(word_or_words).each do |word|
-  #       word = word.downcase unless opts[:case_sensitive] == true
-  #       unless model_tags.any?{|tag| tag.word == word}
-  #         #First add Tag/Tagging
-  #         t = Tag.first(:word => word) || Tag.create!(:word => word)
-  #         t.taggings << Tagging.new(:taggable => self)
-  #         t.save
-  # 
-  #         model_tag = ModelTag.new(:word => word, :tag => t)
-  #         self.model_tags << model_tag
-  #         self.tag_words << word
-  #       end
-  #     end
-  #     save
-  #     tags
-  #   end
+  def untag(word_or_words, options={})
+    return 0 if model_tags.blank?
+    arr_of_words(word_or_words).each do |word|
+      word = word.downcase unless options[:case_sensitive] == true
+      tag = Tag.first(:word => word)
+      tagging_for_deletion = t.taggings.select{|tagging| tagging.taggable_type == self.class.name && tagging.taggable_id == self.id}.first
+      tag.taggings.delete tagging_for_deletion
+      tag.save_or_destroy
+    end
+    save
+    reload
+  end
   
   
   # returns the Rating object found if user has rated this project, else returns nil
