@@ -66,6 +66,10 @@ class Tag
     most_tagged(klass, :limit => 25)
   end
   
+  def to_s
+    word
+  end
+  
   def count_for(klass = nil)
     klass ? send(taggings_count_key_for(klass)) : taggings_count
   end
