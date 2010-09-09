@@ -46,6 +46,14 @@ class Tag
     all(lo)
   end
   
+  def self.search(query)
+    results = []
+    all.each do |tag|
+      results << tag if tag.word =~ Regexp.new(query)
+    end
+    results.blank? ? nil : results
+  end
+  
   def self.top_25(klass = nil)
     most_tagged(klass, :limit => 25)
   end
