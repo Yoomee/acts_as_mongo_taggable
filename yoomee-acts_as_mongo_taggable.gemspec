@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{yoomee-acts_as_mongo_taggable}
-  s.version = "0.2.3"
+  s.version = "0.2.4"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Matt Atkins, Matt E. Patterson"]
-  s.date = %q{2010-08-25}
+  s.date = %q{2010-09-09}
   s.description = %q{A ruby gem for acts_as_taggable to mongo}
   s.email = %q{matt@yoomee.com, mpatterson@ngenera.com}
   s.extra_rdoc_files = [
