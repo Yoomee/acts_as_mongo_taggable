@@ -5,7 +5,7 @@
 
 Gem::Specification.new do |s|
   s.name = %q{yoomee-acts_as_mongo_taggable}
-  s.version = "0.2.4"
+  s.version = "0.2.5"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["Matt Atkins, Matt E. Patterson"]

@@ -3,6 +3,14 @@ class Tag
   key :word,            String,   :required => true, :index => true
   key :taggings_count,   Integer, :index => true
   
+  begin
+    MongoSphinx
+    has_mongo_sphinx = true
+  rescue NameError => e
+    has_mongo_sphinx = false
+  end
+  fulltext_index :word, :delta => true if has_mongo_sphinx
+  
   many :taggings do
     def << (tagging)
       super << tagging
@@ -19,7 +27,7 @@ class Tag
   ensure_index 'taggings.taggable_type'
   ensure_index 'taggings.taggable_id'
   
-  before_save :set_tagging_counts
+  before_save :set_tagging_counts  
   
   def self.register_taggable_type(type)
     key taggings_count_key_for(type), Integer, :index => true
